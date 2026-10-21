@@ -6,6 +6,7 @@ Laravel 12 project matching the supplied four-table diagram. Column and table na
 ```sh
 composer install
 php artisan migrate
+php artisan storage:link
 php artisan serve
 ```
 The default database is SQLite (database/database.sqlite). To use MySQL, configure DB_CONNECTION=mysql and DB_HOST, DB_PORT, DB_DATABASE=library, DB_USERNAME and DB_PASSWORD in .env, create the library database, then migrate.
@@ -29,4 +30,9 @@ POST /api/book-types: {"BookTypeName":"Programming"}
 POST /api/books: {"BookTitle":"Laravel Basics","BookTypeID":1,"NumOfPages":200,"NumOfCopies":5}
 POST /api/book-authors: {"BookID":1,"AuthorID":1,"AuthorDate":"2026-10-14","Remark":"Main author"}
 ```
-Required fields: AuthorName, BookTypeName, BookTitle/BookTypeID and BookID/AuthorID. Other fields are optional. Photo stores a path or URL. Validation failures return 422, missing records 404, creation 201 and deletion 204. Referenced parents cannot be deleted until dependent records are removed (409). These assignment endpoints are public and have no authentication.
+Required fields: AuthorName, BookTypeName, BookTitle/BookTypeID and BookID/AuthorID. Other fields are optional. Photo accepts an uploaded JPG, PNG or WebP file up to 2 MB on authors and books. Responses include Photo (stored path) and PhotoUrl. Use multipart/form-data for pictures; update with POST and `_method=PATCH`. Omit Photo to retain the current picture. Validation failures return 422, missing records 404, creation 201 and deletion 200 with a success message. Referenced parents cannot be deleted until dependent records are removed (409). These assignment endpoints are public and have no authentication.
+
+## Management page and messages
+Open `/` to manage all four resources with forms, update/delete actions, picture selection, and Return / Cancel buttons. Failed submissions keep the form open and preserve input. Successful insert/update/delete requests include `success: true` and `message` alongside record fields. Errors include `success: false`, `message`, and field `errors` for validation (422). Lists remain JSON arrays for existing API clients.
+
+Dates use YYYY-MM-DD; birthdays cannot be in the future. Counts must be nonnegative integers within the database range. Related IDs must exist, and duplicate book-author links are rejected. Uploaded pictures are removed when replaced or when their record is deleted.

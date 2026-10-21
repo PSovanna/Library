@@ -19,13 +19,13 @@ class BookTypeController extends Controller
             'BookTypeName' => 'required|string|max:255',
         ]);
 
-        return response()->json(BookType::create($data), 201);
+        return $this->success('Book type inserted successfully.', BookType::create($data), 201);
     }
 
     public function show(BookType $record)
     {
 
-        return response()->json($record);
+        return $this->success('Book type retrieved successfully.', $record);
     }
 
     public function update(Request $request, BookType $record)
@@ -39,7 +39,7 @@ class BookTypeController extends Controller
         $data = $request->validate($rules);
         $record->update($data);
 
-        return response()->json($record);
+        return $this->success('Book type updated successfully.', $record);
     }
 
     public function destroy(BookType $record)
@@ -49,11 +49,11 @@ class BookTypeController extends Controller
             $record->delete();
         } catch (QueryException $e) {
             if (in_array((string) $e->getCode(), ['23000', '23503'])) {
-                return response()->json(['message' => 'Remove related records before deleting this record.'], 409);
+                return response()->json(['success' => false, 'message' => 'Remove related records before deleting this record.'], 409);
             }
             throw $e;
         }
 
-        return response()->noContent();
+        return $this->success('Book type deleted successfully.');
     }
 }

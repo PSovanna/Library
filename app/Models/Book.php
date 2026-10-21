@@ -12,7 +12,14 @@ class Book extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['BookTitle', 'BookTypeID', 'PublishDate', 'NumOfPages', 'NumOfCopies', 'Edition', 'Publisher', 'BookSource', 'Remark'];
+    protected $fillable = ['BookTitle', 'BookTypeID', 'PublishDate', 'NumOfPages', 'NumOfCopies', 'Edition', 'Publisher', 'BookSource', 'Remark', 'Photo'];
+
+    protected $appends = ['PhotoUrl'];
+
+    public function getPhotoUrlAttribute(): ?string
+    {
+        return $this->Photo ? url('storage/'.$this->Photo) : null;
+    }
 
     public function bookType()
     {

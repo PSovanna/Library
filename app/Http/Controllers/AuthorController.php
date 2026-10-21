@@ -18,21 +18,23 @@ class AuthorController extends Controller
         $data = $request->validate([
             'AuthorName' => 'required|string|max:255',
             'Gender' => 'nullable|string|max:20',
-            'DOB' => 'nullable|date',
+            'DOB' => 'nullable|date_format:Y-m-d|before_or_equal:today',
             'POB' => 'nullable|string|max:255',
             'Address' => 'nullable|string|max:500',
-            'Phone' => 'nullable|string|max:30',
+            'Phone' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9][0-9 ()-]{5,29}$/'],
             'Email' => 'nullable|email|max:255',
-            'Photo' => 'nullable|string|max:2048',
+            'Photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        return response()->json(Author::create($data), 201);
+        $record = $this->saveWithPhoto(new Author, $request, $data, 'authors');
+
+        return $this->success('Author inserted successfully.', $record, 201);
     }
 
     public function show(Author $record)
     {
 
-        return response()->json($record);
+        return $this->success('Author retrieved successfully.', $record);
     }
 
     public function update(Request $request, Author $record)
@@ -40,20 +42,20 @@ class AuthorController extends Controller
 
         $rules = ['AuthorName' => 'required|string|max:255',
             'Gender' => 'nullable|string|max:20',
-            'DOB' => 'nullable|date',
+            'DOB' => 'nullable|date_format:Y-m-d|before_or_equal:today',
             'POB' => 'nullable|string|max:255',
             'Address' => 'nullable|string|max:500',
-            'Phone' => 'nullable|string|max:30',
+            'Phone' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9][0-9 ()-]{5,29}$/'],
             'Email' => 'nullable|email|max:255',
-            'Photo' => 'nullable|string|max:2048'];
+            'Photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048'];
         foreach ($rules as &$rule) {
-            $rule = 'sometimes|'.$rule;
+            $rule = is_array($rule) ? array_merge(['sometimes'], $rule) : 'sometimes|'.$rule;
         }
         unset($rule);
         $data = $request->validate($rules);
-        $record->update($data);
+        $this->saveWithPhoto($record, $request, $data, 'authors');
 
-        return response()->json($record);
+        return $this->success('Author updated successfully.', $record);
     }
 
     public function destroy(Author $record)
@@ -63,11 +65,13 @@ class AuthorController extends Controller
             $record->delete();
         } catch (QueryException $e) {
             if (in_array((string) $e->getCode(), ['23000', '23503'])) {
-                return response()->json(['message' => 'Remove related records before deleting this record.'], 409);
+                return response()->json(['success' => false, 'message' => 'Remove related records before deleting this record.'], 409);
             }
             throw $e;
         }
 
-        return response()->noContent();
+        $this->deletePhoto($record->Photo);
+
+        return $this->success('Author deleted successfully.');
     }
 }

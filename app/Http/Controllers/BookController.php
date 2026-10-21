@@ -19,21 +19,24 @@ class BookController extends Controller
             'BookTitle' => 'required|string|max:255',
             'BookTypeID' => 'required|integer|exists:tblBookType,BookTypeID',
             'PublishDate' => 'nullable|date',
-            'NumOfPages' => 'nullable|integer|min:0',
-            'NumOfCopies' => 'nullable|integer|min:0',
+            'NumOfPages' => 'nullable|integer|min:0|max:4294967295',
+            'NumOfCopies' => 'nullable|integer|min:0|max:4294967295',
             'Edition' => 'nullable|string|max:100',
             'Publisher' => 'nullable|string|max:255',
             'BookSource' => 'nullable|string|max:255',
+            'Photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'Remark' => 'nullable|string',
         ]);
 
-        return response()->json(Book::create($data), 201);
+        $record = $this->saveWithPhoto(new Book, $request, $data, 'books');
+
+        return $this->success('Book inserted successfully.', $record, 201);
     }
 
     public function show(Book $record)
     {
 
-        return response()->json($record);
+        return $this->success('Book retrieved successfully.', $record);
     }
 
     public function update(Request $request, Book $record)
@@ -42,20 +45,21 @@ class BookController extends Controller
         $rules = ['BookTitle' => 'required|string|max:255',
             'BookTypeID' => 'required|integer|exists:tblBookType,BookTypeID',
             'PublishDate' => 'nullable|date',
-            'NumOfPages' => 'nullable|integer|min:0',
-            'NumOfCopies' => 'nullable|integer|min:0',
+            'NumOfPages' => 'nullable|integer|min:0|max:4294967295',
+            'NumOfCopies' => 'nullable|integer|min:0|max:4294967295',
             'Edition' => 'nullable|string|max:100',
             'Publisher' => 'nullable|string|max:255',
             'BookSource' => 'nullable|string|max:255',
+            'Photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'Remark' => 'nullable|string'];
         foreach ($rules as &$rule) {
             $rule = 'sometimes|'.$rule;
         }
         unset($rule);
         $data = $request->validate($rules);
-        $record->update($data);
+        $this->saveWithPhoto($record, $request, $data, 'books');
 
-        return response()->json($record);
+        return $this->success('Book updated successfully.', $record);
     }
 
     public function destroy(Book $record)
@@ -65,11 +69,13 @@ class BookController extends Controller
             $record->delete();
         } catch (QueryException $e) {
             if (in_array((string) $e->getCode(), ['23000', '23503'])) {
-                return response()->json(['message' => 'Remove related records before deleting this record.'], 409);
+                return response()->json(['success' => false, 'message' => 'Remove related records before deleting this record.'], 409);
             }
             throw $e;
         }
 
-        return response()->noContent();
+        $this->deletePhoto($record->Photo);
+
+        return $this->success('Book deleted successfully.');
     }
 }

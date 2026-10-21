@@ -26,14 +26,14 @@ class BookAuthorController extends Controller
             throw ValidationException::withMessages(['AuthorID' => 'This author is already linked to this book.']);
         }
 
-        return response()->json(BookAuthor::create($data), 201);
+        return $this->success('Book author link inserted successfully.', BookAuthor::create($data), 201);
     }
 
     public function show(int $bookId, int $authorId)
     {
         $record = BookAuthor::where('BookID', $bookId)->where('AuthorID', $authorId)->firstOrFail();
 
-        return response()->json($record);
+        return $this->success('Book author link retrieved successfully.', $record);
     }
 
     public function update(Request $request, int $bookId, int $authorId)
@@ -50,7 +50,7 @@ class BookAuthorController extends Controller
         }
         $record = BookAuthor::where('BookID', $bookId)->where('AuthorID', $authorId)->firstOrFail();
 
-        return response()->json($record);
+        return $this->success('Book author link updated successfully.', $record);
     }
 
     public function destroy(int $bookId, int $authorId)
@@ -60,11 +60,11 @@ class BookAuthorController extends Controller
             BookAuthor::where('BookID', $bookId)->where('AuthorID', $authorId)->delete();
         } catch (QueryException $e) {
             if (in_array((string) $e->getCode(), ['23000', '23503'])) {
-                return response()->json(['message' => 'Remove related records before deleting this record.'], 409);
+                return response()->json(['success' => false, 'message' => 'Remove related records before deleting this record.'], 409);
             }
             throw $e;
         }
 
-        return response()->noContent();
+        return $this->success('Book author link deleted successfully.');
     }
 }
